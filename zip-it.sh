@@ -13,7 +13,7 @@ case "$1" in
     ZIPFILE="postedit_codebase_sonnet.zip"
     ;;
   rewrite)
-    ZIPFILE="postedit_codebase_sonnet.zip"
+    ZIPFILE="rewrite_codebase.zip"
     ;;
   *)
     echo "Usage: $0 {preedit|beetle|sonnet|rewrite}"
