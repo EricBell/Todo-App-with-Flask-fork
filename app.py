@@ -40,6 +40,9 @@ class Todo(db.Model):
         return f"\n<Todo id:{self.id}, description:{self.description} completed:{self.completed}>"
 
 # Create tables for in-memory database (migrations not needed for in-memory)
+# Also keep track of deleted starter tasks
+deleted_starter_tasks = set()
+
 with app.app_context():
     db.create_all()
 
@@ -98,7 +101,7 @@ def update_todo(list_id, todo_id):
     body = {}
     try:
         completed = request.get_json()['completed']
-        todo = Todo.query.get(todo_id)
+        todo = db.session.get(Todo, todo_id)
         todo.completed = completed
         db.session.commit()
         body['completed'] = todo.completed
@@ -209,7 +212,7 @@ def get_todo_list(list_id):
     newList_id = dummyList[0]['id']
 
     if not list_id == 'welcome':
-        return render_template('index.html', data=Todo.query.filter_by(todolist_id=list_id).order_by('id').all(), list_id=list_id, list=TodoList.query.order_by('id').all(), name=TodoList.query.get(list_id).name)
+        return render_template('index.html', data=Todo.query.filter_by(todolist_id=list_id).order_by('id').all(), list_id=list_id, list=TodoList.query.order_by('id').all(), name=db.session.get(TodoList, list_id).name)
     else:
         return render_template('index.html', data=dummyTodoList, list_id=newList_id, list=dummyList, name=name)
 

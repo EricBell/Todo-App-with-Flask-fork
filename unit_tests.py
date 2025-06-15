@@ -1,73 +1,49 @@
 import unittest
-from app import app, db, Todo 
+import json
+from app import app, db
 
-class TodoTestCase(unittest.TestCase):
 
+class StarterTaskDeleteFeatureTest(unittest.TestCase):
+    """Test specifically for delete row functionality in the starter task list"""
+    
     def setUp(self):
-        # Configure the app for testing
-        app.config['TESTING'] = True
-        # Use an in-memory SQLite database for tests
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-        # Create the test client
+        """setup before each test"""
         self.app = app.test_client()
-        # Push the application context and create all tables
-        self.ctx = app.app_context()
-        self.ctx.push()
-        db.create_all()
-
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        
+        with app.app_context():
+            db.create_all()
+    
     def tearDown(self):
-        # Cleanup the database and remove the app context
-        db.session.remove()
-        db.drop_all()
-        self.ctx.pop()
-
-    def test_home(self):
-        # Test that the home route ("/") returns a 200 OK status code.
-        response = self.app.get("/")
+        """cleanup after test"""
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
+    
+    def test_delete_starter_task_row(self):
+        """Test that we can delete a row from the starter task list"""
+        # The starter task has dummy todos with IDs 1, 2, 3
+        # Try to delete todo with id=1 from the welcome list
+        response = self.app.delete('/todos/welcome/1')
+        
+        # Should return 200 if delete feature is implemented
         self.assertEqual(response.status_code, 200)
-        # Optionally, check for expected content in the rendered template.
-        self.assertIn(b"Todo", response.data)
+        
+        # Response should indicate success
+        data = json.loads(response.data)
+        self.assertTrue(data.get('successful', False))
+    
+    def test_delete_all_starter_task_rows(self):
+        """Test deleting all rows from starter task list one by one"""
+        # Delete each of the 3 starter todos
+        for todo_id in [1, 2, 3]:
+            response = self.app.delete(f'/todos/welcome/{todo_id}')
+            self.assertEqual(response.status_code, 200)
+            
+            data = json.loads(response.data)
+            self.assertTrue(data.get('successful', False))
 
-    def test_add_todo(self):
-        # Test posting a new todo item using the "/add" route.
-        response = self.app.post("/add", data={"title": "Test Todo"}, follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        # Verify that the new todo has been added to the database.
-        todo = Todo.query.filter_by(title="Test Todo").first()
-        self.assertIsNotNone(todo)
-        self.assertFalse(todo.complete)
 
-    def test_update_todo(self):
-        # Manually add a todo item to update.
-        todo = Todo(title="Update Test", complete=False)
-        db.session.add(todo)
-        db.session.commit()
-        todo_id = todo.id
-
-        # Toggle its 'complete' value by accessing the update route.
-        response = self.app.get(f"/update/{todo_id}", follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        # Use Session.get() instead of Query.get()
-        updated_todo = db.session.get(Todo, todo_id)
-        self.assertTrue(updated_todo.complete)
-
-    def test_delete_todo(self):
-        # Manually add a todo item to delete.
-        todo = Todo(title="Delete Test", complete=False)
-        db.session.add(todo)
-        db.session.commit()
-        todo_id = todo.id
-
-        # Delete the todo using the delete route.
-        response = self.app.get(f"/delete/{todo_id}", follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        # Use Session.get() instead of Query.get()
-        deleted_todo = db.session.get(Todo, todo_id)
-        self.assertIsNone(deleted_todo)
-
-    # def test_failure(self):
-    #     # Simulate a failure case
-    #     self.assertFalse(True, "This test should fail.")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
