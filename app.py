@@ -40,11 +40,13 @@ class Todo(db.Model):
         return f"\n<Todo id:{self.id}, description:{self.description} completed:{self.completed}>"
 
 # Create tables for in-memory database (migrations not needed for in-memory)
-# Also keep track of deleted starter tasks
-deleted_starter_tasks = set()
-
 with app.app_context():
     db.create_all()
+
+def get_deleted_tasks():
+    if not hasattr(app, 'deleted_starter_tasks'):
+        app.deleted_starter_tasks = set()
+    return app.deleted_starter_tasks
 
 
 @app.route('/todos/<todolist_id>', methods=['POST'])
@@ -144,18 +146,23 @@ def delete_todo(list_id, todo_id):
     print(list_id)
     error = False
     body = {}
-    try:
-        # Alternative way
-        # todo = Todo.query.get(todo_id)
-        # db.session.delete(todo)
-        Todo.query.filter_by(id=todo_id).delete()
-        db.session.commit()
-        body['successful'] = not error
-    except:
-        error = True
-        db.session.rollback()
-    finally:
-        db.session.close()
+    
+    if list_id == 'welcome':
+        get_deleted_tasks().add(int(todo_id))
+        body['successful'] = True
+    else:
+        try:
+            # Alternative way
+            # todo = Todo.query.get(todo_id)
+            # db.session.delete(todo)
+            Todo.query.filter_by(id=todo_id).delete()
+            db.session.commit()
+            body['successful'] = not error
+        except:
+            error = True
+            db.session.rollback()
+        finally:
+            db.session.close()
 
     if error:
         abort(400)
@@ -188,17 +195,16 @@ def delete_list(list_id):
 
 @app.route('/todos/<list_id>')
 def get_todo_list(list_id):
+    class DummyTodo:
+        def __init__(self, id, description):
+            self.id = id
+            self.description = description
+            self.completed = False
+    
     dummyTodoList = [
-        {
-            'id': 1,
-            'description': 'Create a Todo'
-        }, {
-            'id': 2,
-            'description': 'Accomplish the task'
-        }, {
-            'id': 3,
-            'description': 'Remove the Todo',
-        },
+        DummyTodo(1, 'Create a Todo'),
+        DummyTodo(2, 'Accomplish the task'),
+        DummyTodo(3, 'Remove the Todo'),
     ]
 
     dummyList = [
@@ -214,7 +220,11 @@ def get_todo_list(list_id):
     if not list_id == 'welcome':
         return render_template('index.html', data=Todo.query.filter_by(todolist_id=list_id).order_by('id').all(), list_id=list_id, list=TodoList.query.order_by('id').all(), name=db.session.get(TodoList, list_id).name)
     else:
-        return render_template('index.html', data=dummyTodoList, list_id=newList_id, list=dummyList, name=name)
+        todos_to_show = []
+        for todo in dummyTodoList:
+            if todo.id not in get_deleted_tasks():
+                todos_to_show.append(todo)
+        return render_template('index.html', data=todos_to_show, list_id=newList_id, list=dummyList, name=name)
 
 
 @app.route('/')
