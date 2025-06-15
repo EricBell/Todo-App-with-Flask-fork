@@ -22,4 +22,4 @@ case "$1" in
 esac
 
 # zip -r "$ZIPFILE" . -x ".venv/*" ".venv" ".git/*" ".git" "*/__pycache__/*" "__pycache__" "zip-it.sh" "clean.sh" "tests/*" "tests"
-zip -r "$ZIPFILE" . -x "*.venv/*" "*.git/*" "*__pycache__/*" "*__pycache__" "zip-it.sh" "clean.sh" "tests/*" "tests" "docker_run_tests.sh" ".bash"
+zip -r "$ZIPFILE" . -x "*.venv/*" "*.git/*" "*__pycache__/*" "*__pycache__" "zip-it.sh" "clean.sh" "tests/*" "tests" "docker_run_tests.sh" ".bash" "*claude/*" "claude"
