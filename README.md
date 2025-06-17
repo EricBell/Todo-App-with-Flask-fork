@@ -2,34 +2,45 @@
 
 This is a not so simple todo application that implements CRUD functionality. You can create a list of Todo items, manage the list of items and delete them when you feel satisfied with the items on the list and no longer have a need for them.
 
+## Basic analysis of this app
+
+Flask Todo app with two models - TodoList and Todo. Uses SQLite in-memory database. Key
+  features:
+
+  Models:
+  - TodoList: Has id, name, and todos relationship (app.py:14-26)
+  - Todo: Has id, description, completed status, and todolist_id foreign key
+  (app.py:28-41)
+
+  Routes:
+  - POST /todos/<todolist_id>: Create new todo (app.py:52-73)
+  - POST /todos: Create new todo list (app.py:76-96)
+  - PATCH /todos/<list_id>/<todo_id>: Update todo completion status (app.py:99-119)
+  - PUT /todos/<list_id>: Mark all todos in list as complete (app.py:122-141)
+  - DELETE /todos/<list_id>/<todo_id>: Delete specific todo (app.py:144-170)
+  - DELETE /todos/<list_id>: Delete entire todo list (app.py:173-193)
+  - GET /todos/<list_id>: Display todo list with template (app.py:196-227)
+  - GET /: Redirect to first todo list or welcome page (app.py:230-232)
+
+  Special Features:
+  - Welcome page with dummy starter tasks (app.py:204-227)
+  - Tracks deleted starter tasks in memory (app.py:46-49)
+  - Database tables created automatically on startup (app.py:43-44)
+
+
 ## Usage
 
-1. Go to line 8 of the `app.py` file and modify the SQLALCHEMY_DATABASE_URI app configuration to match the database connection settings you have set up in your machine.
-   Follow this format:
-   ![Format for setting the SQLALCHEMY_DATABASE_URI app configuration](https://video.udacity-data.com/topher/2019/August/5d4df44e_database-connection-uri-parts/database-connection-uri-parts.png)
+1. This app has been modified to use with DA projects. The `app.py` file has a statement with  SQLALCHEMY_DATABASE_URI which you provide a connection string. The default an in-memory database. You can setup SQL Alchemy if you like to a postgres db with the right connection string.
 
-2. Install Postgres and get its server running  
-   On a Unix machine, to start the server, you can use the following command:
+2. Create a venv and activate it. The use pip to install the dependencies in the requirements.txt file.
 
-   ```bash
-   >>$ sudo service postgresql start
-   ```
+3. Run the app: python app.py.
 
-   On a Windows machine, to start the server, you can use the following command:
-
-   ```bash
-   >>$ pg_ctl.exe start -D 'C:/Program Files/PostgreSQL/<version number>/data'
-   ```
-
-3. Now, on your terminal, `cd` to the project directory and run:
-
-   ```bash
-   >>$ source .bash
-   ```
+This has been tested with python 3.11.12.
 
 And that should do it. Have fun with the app.
 
-## From DA Python template
+## Note from DA Python template
 
 # Docker Dev Env for Python Flask
 
@@ -42,30 +53,7 @@ This command builds a docker image with the code of this repository and runs the
 docker run -t my_app ./run_tests.sh
 ```
 
-```
-[+] Building 0.1s (10/10) FINISHED                                                            docker:default
- => [internal] load build definition from Dockerfile                                                    0.0s
- => => transferring dockerfile: 248B                                                                    0.0s
- => [internal] load metadata for docker.io/library/python:3.13.2-alpine3.21@sha256:323a717dc4a010fee21  0.0s
- => [internal] load .dockerignore                                                                       0.0s
- => => transferring context: 94B                                                                        0.0s
- => [1/5] FROM docker.io/library/python:3.13.2-alpine3.21@sha256:323a717dc4a010fee21e3f1aac738ee10bb48  0.0s
- => [internal] load build context                                                                       0.0s
- => => transferring context: 253B                                                                       0.0s
- => CACHED [2/5] WORKDIR /app                                                                           0.0s
- => CACHED [3/5] COPY requirements.txt .                                                                0.0s
- => CACHED [4/5] RUN pip install --no-cache-dir -r requirements.txt                                     0.0s
- => CACHED [5/5] COPY . .                                                                               0.0s
- => exporting to image                                                                                  0.0s
- => => exporting layers                                                                                 0.0s
- => => writing image sha256:4e6c980fbf83b2131359af3d3730e61c89ae7dc85e23c151114b0d9d4a749158            0.0s
- => => naming to docker.io/library/my_app                                                               0.0s
 
-....
-----------------------------------------------------------------------
-Ran 4 tests in 0.069s
-
-OK
 ```
 # Running a specific test
 
