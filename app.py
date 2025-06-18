@@ -175,10 +175,15 @@ def delete_list(list_id):
     error = False
     body = {}
     try:
-        # Alternative way
-        # todo = Todo.query.get(todo_id)
-        # db.session.delete(todo)
-        TodoList.query.filter_by(id=list_id).delete()
+        if list_id == 'welcome':
+            # Mark the starter list as permanently deleted
+            app.starter_list_deleted = True
+        else:
+            # First delete all todos associated with this list
+            Todo.query.filter_by(todolist_id=list_id).delete()
+            # Then delete the list itself
+            TodoList.query.filter_by(id=list_id).delete()
+        
         db.session.commit()
         body['successful'] = not error
     except:
@@ -217,14 +222,33 @@ def get_todo_list(list_id):
     name = dummyList[0]['name']
     newList_id = dummyList[0]['id']
 
+    # Get available lists for sidebar (excluding deleted starter list if needed)
+    available_lists = TodoList.query.order_by('id').all()
+    if not (hasattr(app, 'starter_list_deleted') and app.starter_list_deleted):
+        # Add starter list to available lists if not deleted
+        available_lists = list(available_lists) + dummyList
+    
     if not list_id == 'welcome':
-        return render_template('index.html', data=Todo.query.filter_by(todolist_id=list_id).order_by('id').all(), list_id=list_id, list=TodoList.query.order_by('id').all(), name=db.session.get(TodoList, list_id).name)
+        # Get list data, but handle if list was deleted
+        try:
+            list_obj = db.session.get(TodoList, list_id)
+            if list_obj is None:
+                # List was deleted, show empty UI with available lists
+                return render_template('index.html', data=[], list_id=list_id, list=available_lists, name="Deleted List")
+            return render_template('index.html', data=Todo.query.filter_by(todolist_id=list_id).order_by('id').all(), list_id=list_id, list=available_lists, name=list_obj.name)
+        except:
+            return render_template('index.html', data=[], list_id=list_id, list=available_lists, name="Deleted List")
     else:
+        # Handle starter list
+        if hasattr(app, 'starter_list_deleted') and app.starter_list_deleted:
+            # Show empty UI but keep it functional
+            return render_template('index.html', data=[], list_id=newList_id, list=available_lists, name="Deleted Starter List")
+        
         todos_to_show = []
         for todo in dummyTodoList:
             if todo.id not in get_deleted_tasks():
                 todos_to_show.append(todo)
-        return render_template('index.html', data=todos_to_show, list_id=newList_id, list=dummyList, name=name)
+        return render_template('index.html', data=todos_to_show, list_id=newList_id, list=available_lists, name=name)
 
 
 @app.route('/')
