@@ -152,9 +152,7 @@ def delete_todo(list_id, todo_id):
         body['successful'] = True
     else:
         try:
-            # Alternative way
-            # todo = Todo.query.get(todo_id)
-            # db.session.delete(todo)
+            # Just delete the Todo.
             Todo.query.filter_by(id=todo_id).delete()
             db.session.commit()
             body['successful'] = not error
@@ -229,7 +227,8 @@ def get_todo_list(list_id):
         available_lists = list(available_lists) + dummyList
     
     if not list_id == 'welcome':
-        # Get list data, but handle if list was deleted
+        # Get list data, but handle if list was deleted. It was more elaborate before
+        # which kept it in place. Now we dont.
         try:
             list_obj = db.session.get(TodoList, list_id)
             if list_obj is None:
